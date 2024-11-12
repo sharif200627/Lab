@@ -1,0 +1,505 @@
+Lab1---caiser cipher
+
+
+def cipher_encrypt(message,shift):
+    encrypted_message=""
+    for char in message:
+        if char.isupper():
+            encrypted_message += chr((ord(char)+shift-65)%26+65)
+        elif char.islower():
+            encrypted_message += chr((ord(char)+shift-97)%26+97)
+        else:
+            #if its not a letter
+            encrypted_message += char
+    return encrypted_message
+
+def cipher_decrypt(message,shift):
+    decrypted_message=""
+    for char in message:
+        #decrypt uppercase characters
+        if char.isupper():
+            decrypted_message += chr((ord(char)-shift-65)%26+65)
+        elif char.islower():
+            decrypted_message += chr((ord(char)-shift-97)%26+97)
+        else:
+            #if its not a letter
+            decrypted_message += char
+    return decrypted_message
+
+
+message=input("Enter the message: ")
+shift=int(input("Enter the shift value: " ))
+
+encrypted_message=cipher_encrypt(message,shift)
+print("Th Encrypted message is: ", encrypted_message)
+
+decrypted_text=cipher_decrypt(encrypted_message,shift)
+print("The Decrypted message: ",decrypted_text)
+
+
+
+LAB-2  Monoalphabetic Cipher 
+
+
+
+import string
+import random
+
+def generate_key():
+    alphabet=list(string.ascii_lowercase)
+    shuffled_alphabet= alphabet[:]
+    random.shuffle(shuffled_alphabet)
+    return dict(zip(alphabet,shuffled_alphabet))
+
+
+def encrypt(plaintext,key):
+    plaintext=plaintext.lower()
+    ciphertext = ""
+    for char in plaintext:
+        if char in key:
+            ciphertext += key[char]
+        else:
+            ciphertext += char  
+    return ciphertext
+
+
+def decrypt(ciphertext,key):
+    reverse_key = {v:k for k,v in key.items()}
+    plaintext= ""
+    for char in ciphertext:
+        if char in reverse_key:
+            plaintext +=reverse_key[char]
+        else:
+            plaintext += char 
+    return plaintext
+
+
+
+#generate key
+key=generate_key()
+
+#encrypting message
+plaintext = "Sharif"
+ciphertext= encrypt(plaintext,key)
+print("Plaintext: ",plaintext)
+print("Ciphertext: ",ciphertext)
+
+#Decrypting message
+decrypted_text=decrypt(ciphertext,key)
+print("Decrypted Text: ",decrypted_text)
+
+
+
+LAB-3:  Brute Force
+
+
+
+#Brute Force Attacking
+#caeser encryption and Decryption
+
+def cipher_encrypt(message,shift):
+    encrypted_message=""
+    for char in message:
+        if char.isupper():
+            encrypted_message += chr((ord(char)+shift-65)%26+65)
+        elif char.islower():
+            encrypted_message += chr((ord(char)+shift-97)%26+97)
+        else:
+            #if its not a letter
+            encrypted_message += char
+    return encrypted_message
+
+def cipher_decrypt(message,shift):
+    decrypted_message=""
+    for char in message:
+        #decrypt uppercase characters
+        if char.isupper():
+            decrypted_message += chr((ord(char)-shift-65)%26+65)
+        elif char.islower():
+            decrypted_message += chr((ord(char)-shift-97)%26+97)
+        else:
+            #if its not a letter
+            decrypted_message += char
+    return decrypted_message
+
+def brute_force_attack(ciphertext):
+    print(f"Attempting to decrypt the ciphertext with all possible shifts....\n")
+    for shift in range(26):
+        decrypted_text=cipher_decrypt(ciphertext,shift)
+        print(f"Shift {shift}: {decrypted_text}")
+        
+    
+
+
+message=input("Enter the message: ")
+shift=int(input("Enter the shift value: " ))
+
+encrypted_message=cipher_encrypt(message,shift)
+print("Th Encrypted message is: ", encrypted_message)
+
+brute_force_attack(encrypted_message)
+
+
+
+LAB-4   Hill Cipher
+
+
+import numpy as np 
+from sympy import Matrix
+
+#Function to calculate modular inverse of matrix of an n*n
+def matrix_mod_inv(matrix,mod):
+    sympy_matrix = Matrix(matrix)
+    if sympy_matrix.det() == 0:
+        raise ValueError("Matrix is singular, cannot find inverse")
+    inv_matrix= sympy_matrix.inv_mod(mod)
+    return np.array(inv_matrix).astype(int)
+
+
+#process converting letter to number
+def text_to_matrix(text,n):
+    text = text.replace(" ","").upper()
+    while len(text)%n !=0:
+        text +='X'  #padding with x
+    matrix = [ord(char)-ord('A') for char in text]
+    return np.array(matrix).reshape(-1,n)
+
+#convert matrix back to text
+def matrix_to_text(matrix):
+    text=''.join(chr(int(round(num))+ord('A')) for num in matrix.flatten())
+    return text;
+
+#Hill cipher Encryption
+def hill_encrypt(plain_text,key_matrix):
+    n=key_matrix.shape[0]
+    text_matrix=text_to_matrix(plain_text,n)
+    encrypted_matrix=(text_matrix @ key_matrix) % 26
+    cipher_text=matrix_to_text(encrypted_matrix)
+    return cipher_text
+
+#decryption
+def hill_decrypt(cipher_text,key_matrix):
+    n=key_matrix.shape[0]
+    inv_key_matrix=matrix_mod_inv(key_matrix,26)
+    text_matrix=text_to_matrix(cipher_text,n)
+    decrypted_matrix=(text_matrix @ inv_key_matrix) % 26
+    plain_text=matrix_to_text(decrypted_matrix)
+    return plain_text
+
+#example uses
+key_matrix = np.array([[5, 8, 17], [1, 19, 8], [9, 4, 14]])
+plain_text="HELLOHILL"
+
+#encryption
+cipher_text=hill_encrypt(plain_text,key_matrix)
+print("Encrypted Message: ",cipher_text)
+
+#Decryption
+decrypted_text=hill_decrypt(cipher_text,key_matrix)
+print("Decrypted text: ",decrypted_text)
+
+
+
+
+LAB-5 .....Encryption Playfair cipher..
+
+
+import string
+#generate the playfair cipher key table
+def generate_table(key):
+    key=key.lower().replace("j","i")
+    table=[]
+    seen=set()
+    
+    # add the characters of the key to the table
+    for char in key:
+        if char not in seen and char.isalpha():
+            seen.add(char)
+            table.append(char)
+            
+    # add the remaining letter of the alphabet to the table
+    for char in string.ascii_lowercase:
+        if char not in seen and char !='j':
+            seen.add(char)
+            table.append(char)
+            
+    return [table[i:i+5] for i in range(0,25,5)] #5x5 matrix
+
+# function to prepare the message by splitting into digraphs
+def prepare_message(message):
+    message=message.lower().replace("j","i")
+    prepared_message=[]
+    
+    i=0
+    while i<len(message):
+        if i+1 <len(message) and message[i] != message[i+1]:
+            prepared_message.append(message[i]+message[i+1])
+            i+=2
+        else:
+            prepared_message.append(message[i]+'x') # adding 'x' to duplicate letters
+            i+=1
+    return prepared_message
+
+
+# function to find the coordinates of a letter in the table
+def find_coordinates(letter,table):
+    for i in range(5):
+        for j in range(5):
+            if table[i][j] == letter:
+                return i,j
+    return None, None
+
+# Function to encrypt the message using the playfair cipher
+
+def playfair_encrypt(message,key):
+    table=generate_table(key)
+    prepared_message = prepare_message(message)
+    encrypted_message = []
+    
+    for digraph in prepared_message:
+        row1, col1 = find_coordinates(digraph[0],table)
+        row2, col2 =find_coordinates(digraph[1],table)
+        
+        if row1==row2: #same row
+            encrypted_message.append(table[row1][(col1+1)%5])
+            encrypted_message.append(table[row2][(col2+1)%5])
+            
+        elif col1==col2:
+            encrypted_message.append(table[(row1 + 1) % 5][col1])
+            encrypted_message.append(table[(row2 + 1) % 5][col2])
+        else:
+            encrypted_message.append(table[row1][col2])
+            encrypted_message.append(table[row2][col1])
+    return ''.join(encrypted_message)
+
+
+# Main function to test the playfair
+
+if __name__ == "__main__":
+    message=input("Enter the message to encrypt : ")
+    key = input("Enter the key: ")
+    
+    encrypted_message= playfair_encrypt(message,key)
+    print(f"Encrypted message: {encrypted_message}")
+            
+
+
+LAB-6 ....Decryption Of playfair cipher
+
+
+import string
+
+def generate_table(key):
+    key=key.lower().replace("j","i")
+    table=[]
+    seen=set()
+    for char in key:
+        if char not in seen and char !='j':
+            table.append(char)
+            seen.add(char)
+            
+    for char in string.ascii_lowercase:
+        if char not in seen and char !='j':
+            table.append(char)
+            seen.add(char)
+            
+    return [table[i:i+5] for i in range(0,25,5)]
+
+
+def prepare_message(message):
+    message=message.lower().replace("j","i")
+    prepared_message=[]
+    
+    i=0
+    while i<len(message):
+        if i+1<len(message) and message[i] != message[i+1]:
+            prepared_message.append(message[i]+message[i+1])
+            i+=2
+        else:
+            prepared_message.append(message[i]+'x')
+            i+=1
+    return prepared_message
+
+def find_corodinate(letter,table):
+    for i in range(5):
+        for j in range(5):
+            if table[i][j]==letter:
+                return i,j
+    return None,None
+def playfair_decrypt(encrypted_message,key):
+    table=generate_table(key)
+    prepared_message=prepare_message(encrypted_message)
+    decrypted_message=[]
+    
+    for digraph in prepared_message:
+        row1,col1=find_corodinate(digraph[0],table)
+        row2,col2=find_corodinate(digraph[1],table)
+        
+        if row1==row2:
+            decrypted_message.append(table[row1][(col1-1)%5])
+            decrypted_message.append(table[row2][(col2-1)%5])
+        elif col1==col2:
+            decrypted_message.append(table[(row1 - 1) % 5][col1])
+            decrypted_message.append(table[(row2 - 1) % 5][col2])
+        else:
+            decrypted_message.append(table[row1][col2])
+            decrypted_message.append(table[row2][col1])
+    return ''.join(decrypted_message)
+
+
+if __name__== "__main__":
+    encrypted_message=input("Enter the message to decrypt: ")
+    key=input("Enter the key:")
+    
+    decrypted_message=playfair_decrypt(encrypted_message,key)
+    print(f"Decrypted message:{decrypted_message}")
+
+
+
+
+
+LAB-7......Polyalphabetic Encryption
+
+def generate_key(text,key):
+    key=list(key)
+    if len(text) == len(key):
+        return "".join(key)
+    else:
+        for i in range(len(text)-len(key)):
+            key.append(key[i%len(key)])
+    return "".join(key)
+
+def encrypt_vigenere(text,key):
+    encrypted_text=[]
+    for i in range(len(text)):
+        x=(ord(text[i])+ord(key[i])) % 26
+        x+=ord('A')
+        encrypted_text.append(chr(x))
+    return "".join(encrypted_text)
+
+#User Input
+plain_text=input("Enter the plain text (A-Z): ").upper()
+key=input("Enter the key (A-Z): ").upper()
+
+#generate key
+key=generate_key(plain_text,key)
+
+#encryption
+encrypted_text=encrypt_vigenere(plain_text,key)
+print(f"Encrypted Text: {encrypted_text}")
+
+
+
+LAB-8  Decryption of poly-alphabetic
+
+
+#polyalphabetic cipher
+
+def generate_key(text,key):
+    key=list(key)
+    if len(text) == len(key):
+        return "".join(key)
+    else:
+        for i in range(len(text)-len(key)):
+            key.append(key[i%len(key)])
+    return "".join(key)
+
+
+def decrypt_vigenere(encrypted_text,key):
+    decrypted_text=[]
+    for i in range(len(encrypted_text)):
+        x=(ord(encrypted_text[i]) - ord(key[i]) +26 ) %26
+        x+=ord('A')
+        decrypted_text.append(chr(x))
+    return "".join(decrypted_text)
+
+#User Input
+cipher_text=input("Enter the cipher text (A-Z): ").upper()
+key=input("Enter the key (A-Z): ").upper()
+
+#generate key
+key=generate_key(cipher_text,key)
+
+#decryption
+decrypted_text=decrypt_vigenere(cipher_text,key)
+print(f"Decrypted Text: {decrypted_text}")
+
+
+
+LAb-9 and 10 vernam
+
+
+def vernam_encrypt(message, key):
+    # Ensure that the message and key are of the same length
+    if len(message) != len(key):
+        raise ValueError("Message and key must have the same length.")
+    
+    # Encrypt by XORing and mapping to A-Z range
+    encrypted_message = ''.join(
+        chr(((ord(m) - ord('A')) ^ (ord(k) - ord('A'))) + ord('A'))
+        for m, k in zip(message.upper(), key.upper())
+    )
+    return encrypted_message
+
+def vernam_decrypt(encrypted_message, key):
+    # Ensure that the encrypted message and key are of the same length
+    if len(encrypted_message) != len(key):
+        raise ValueError("Encrypted message and key must have the same length.")
+    
+    # Decrypt by reversing the encryption process with XOR
+    decrypted_message = ''.join(
+        chr(((ord(e) - ord('A')) ^ (ord(k) - ord('A'))) + ord('A'))
+        for e, k in zip(encrypted_message.upper(), key.upper())
+    )
+    return decrypted_message
+
+# Example usage
+if __name__ == "__main__":
+    # Sample message and key (must be the same length)
+    message = "HELLOWORLD"
+    key = "XMCKLQFTWP"  # Random key with the same length as the message
+    
+    # Encrypt the message
+    encrypted = vernam_encrypt(message, key)
+    print(f"Encrypted Message: {encrypted}")
+    
+    # Decrypt the message
+    decrypted = vernam_decrypt(encrypted, key)
+    print(f"Decrypted Message: {decrypted}")
+
+
+
+
+
+
+For extra talent
+#Brute Force Attacking
+#caeser encryption and Decryption
+
+import string
+def encrypt(plaintext,shift):
+    alphabet=string.ascii_lowercase
+    encrypted= ""
+    for char in plaintext:
+        if char.isalpha():
+            is_upper=char.isupper()
+            char=char.lower()
+            shifted=(alphabet.index(char)+shift)%26
+            encrypted +=alphabet[shifted].upper() if is_upper else alphabet[shifted]
+        else:
+            encrypted += char
+    return encrypted
+
+def decrypt(ciphertext,shift):
+    alphabet=string.ascii_lowercase
+    decrypted= ""
+    for char in ciphertext:
+        if char.isalpha():
+            is_upper=char.isupper()
+            char=char.lower()
+            shifted=(alphabet.index(char)-shift)%26
+            decrypted +=alphabet[shifted].upper() if is_upper else alphabet[shifted]
+        else:
+            decrypted += char
+    return decrypted
+
